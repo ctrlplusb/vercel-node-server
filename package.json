@@ -18,7 +18,9 @@
     "start": "tsdx watch",
     "build": "tsdx build",
     "test": "tsdx test",
-    "lint": "tsdx lint"
+    "lint": "tsdx lint",
+    "test:coverage": "npm run test -- --coverage",
+    "test:coverage:deploy": "npm run test:coverage && codecov"
   },
   "peerDependencies": {},
   "husky": {
@@ -40,6 +42,7 @@
     "@types/micro": "^7.3.3",
     "@types/test-listen": "^1.1.0",
     "axios": "^0.19.0",
+    "codecov": "^3.6.1",
     "form-data": "^2.5.1",
     "husky": "^3.0.9",
     "jest": "^24.9.0",

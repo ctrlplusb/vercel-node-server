@@ -4,14 +4,14 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import listen from 'test-listen';
-import nowNodeServer from '../src';
+import createServer from '../src';
 
 let server: Server;
 let url: string;
 let route: (req: NowRequest, res: NowResponse) => any;
 
 beforeAll(async () => {
-  server = nowNodeServer((req, res) => {
+  server = createServer((req, res) => {
     if (route) {
       return route(req, res);
     }
@@ -164,6 +164,7 @@ describe('request handling', () => {
 
   const formUrlEncoded = (x: object) =>
     Object.keys(x).reduce(
+      // @ts-ignore
       (p, c) => p + `&${c}=${encodeURIComponent(x[c])}`,
       ''
     );
