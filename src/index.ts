@@ -21,61 +21,55 @@ export class ApiError extends Error {
   }
 }
 
-function getBodyParser(req: IncomingMessage, body: Buffer) {
-  return function parseBody(): NowRequestBody {
-    if (!req.headers['content-type']) {
-      return undefined;
-    }
-
-    const { type } = parseContentType(req.headers['content-type']);
-
-    if (type === 'application/json') {
-      try {
-        return JSON.parse(body.toString());
-      } catch (error) {
-        throw new ApiError(400, 'Invalid JSON');
-      }
-    }
-
-    if (type === 'application/octet-stream') {
-      return body;
-    }
-
-    if (type === 'application/x-www-form-urlencoded') {
-      // note: querystring.parse does not produce an iterable object
-      // https://nodejs.org/api/querystring.html#querystring_querystring_parse_str_sep_eq_options
-      return parseQS(body.toString());
-    }
-
-    if (type === 'text/plain') {
-      return body.toString();
-    }
-
+function parseBody(req: IncomingMessage, body: Buffer): NowRequestBody {
+  if (!req.headers['content-type']) {
     return undefined;
-  };
-}
+  }
 
-function getQueryParser({ url = '/' }: IncomingMessage) {
-  return function parseQuery(): NowRequestQuery {
-    // we provide a placeholder base url because we only want searchParams
-    const params = new URL(url, 'https://n').searchParams;
+  const { type } = parseContentType(req.headers['content-type']);
 
-    const query: { [key: string]: string | string[] } = {};
-    params.forEach((value, name) => {
-      query[name] = value;
-    });
-    return query;
-  };
-}
-
-function getCookieParser(req: IncomingMessage) {
-  return function parseCookie(): NowRequestCookies {
-    const header: undefined | string | string[] = req.headers.cookie;
-    if (!header) {
-      return {};
+  if (type === 'application/json') {
+    try {
+      return JSON.parse(body.toString());
+    } catch (error) {
+      throw new ApiError(400, 'Invalid JSON');
     }
-    return parse(Array.isArray(header) ? header.join(';') : header);
-  };
+  }
+
+  if (type === 'application/octet-stream') {
+    return body;
+  }
+
+  if (type === 'application/x-www-form-urlencoded') {
+    // note: querystring.parse does not produce an iterable object
+    // https://nodejs.org/api/querystring.html#querystring_querystring_parse_str_sep_eq_options
+    return parseQS(body.toString());
+  }
+
+  if (type === 'text/plain') {
+    return body.toString();
+  }
+
+  return undefined;
+}
+
+function parseQuery({ url = '/' }: IncomingMessage): NowRequestQuery {
+  // we provide a placeholder base url because we only want searchParams
+  const params = new URL(url, 'https://n').searchParams;
+
+  const query: { [key: string]: string | string[] } = {};
+  params.forEach((value, name) => {
+    query[name] = value;
+  });
+  return query;
+}
+
+function parseCookie(req: IncomingMessage): NowRequestCookies {
+  const header: undefined | string | string[] = req.headers.cookie;
+  if (!header) {
+    return {};
+  }
+  return parse(Array.isArray(header) ? header.join(';') : header);
 }
 
 export const createServer = (
@@ -87,9 +81,9 @@ export const createServer = (
       body:
         typeof bufferOrString === 'string'
           ? bufferOrString
-          : getBodyParser(req, bufferOrString)(),
-      cookies: getCookieParser(req)(),
-      query: getQueryParser(req)(),
+          : parseBody(req, bufferOrString),
+      cookies: parseCookie(req),
+      query: parseQuery(req),
     });
     let _status: number;
     const nowRes = Object.assign(res, {
