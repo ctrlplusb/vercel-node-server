@@ -4,7 +4,7 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import listen from 'test-listen';
-import createServer from '../src';
+import { createServer } from '../src';
 
 let server: Server;
 let url: string;
