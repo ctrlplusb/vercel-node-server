@@ -18,7 +18,7 @@ npm install zeit-node-server
 ### Example Jest Test
 
 ```javascript
-import createServer from 'zeit-now-node-server';
+import { createServer } from 'zeit-now-node-server';
 import listen from 'test-listen';
 import axios from 'axios';
 import routeUnderTest from './api/hello-world';

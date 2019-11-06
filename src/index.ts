@@ -78,7 +78,7 @@ function getCookieParser(req: IncomingMessage) {
   };
 }
 
-const nowNodeServer = (
+export const createServer = (
   route: (req: NowRequest, res: NowResponse) => any | Promise<any>
 ) =>
   micro(async (req: IncomingMessage, res: ServerResponse) => {
@@ -112,5 +112,3 @@ const nowNodeServer = (
     });
     return await route(nowReq, nowRes);
   });
-
-export default nowNodeServer;
