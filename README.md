@@ -46,8 +46,8 @@ afterAll(() => {
 });
 
 it('should return the expected response' async () => {
-  const response = await axios.get(url);
-  expect(response.data).toBe('Hello world');
+  const response = await axios.get(url, { params: { name: 'Pearl' } });
+  expect(response.data).toBe('Hello Pearl');
 });
 ```
 
