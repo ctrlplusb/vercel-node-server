@@ -12,7 +12,7 @@ Doing so allows you to write unit/integration tests for your routes.
 ## Installation
 
 ```bash
-npm install zeit-node-server
+npm install zeit-now-node-server
 ```
 
 ### Example Jest Test
