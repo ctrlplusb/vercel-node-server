@@ -1,4 +1,4 @@
-# zeit-node-server
+# zeit-now-node-server
 
 An unofficial package allowing you to create Node Server instances of your Zeit `@now/node` lambdas.
 
