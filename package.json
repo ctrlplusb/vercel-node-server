@@ -1,6 +1,6 @@
 {
   "name": "zeit-now-node-server",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "description": "Create a server for your Zeit @now/node lambdas in order to test them",
   "license": "MIT",
   "author": "Sean Matheson",
