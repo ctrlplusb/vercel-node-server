@@ -137,7 +137,7 @@ it('body - json', async () => {
 });
 
 describe('request handling', () => {
-  it('body - invalid json', async () => {
+  it.only('body - invalid json', async () => {
     // ARRANGE
     route = () => {};
 
