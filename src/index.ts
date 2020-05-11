@@ -4,7 +4,7 @@ import {
   NowRequestBody,
   NowRequest,
   NowResponse,
-} from '@now/node';
+} from '@vercel/node';
 import { IncomingMessage, ServerResponse } from 'http';
 import { parse } from 'cookie';
 import { parse as parseContentType } from 'content-type';

@@ -1312,13 +1312,6 @@
     "@types/yargs" "^15.0.0"
     chalk "^3.0.0"
 
-"@now/node@^1.0.2":
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/@now/node/-/node-1.0.2.tgz#484e595d992d52728f5b6e82c0310b5a7ceba851"
-  integrity sha512-jGcpqOyQuxbYz0yBAV+Y5VTmuCF+geai1zOQPPKBNzsh+9j5Yoo8f0ImaGYkJeTQv19exKf3hHa5OcA4q4+5qg==
-  dependencies:
-    "@types/node" "*"
-
 "@rollup/plugin-commonjs@^11.0.0":
   version "11.1.0"
   resolved "https://registry.yarnpkg.com/@rollup/plugin-commonjs/-/plugin-commonjs-11.1.0.tgz#60636c7a722f54b41e419e1709df05c7234557ef"
@@ -1602,6 +1595,13 @@
     lodash "^4.17.15"
     semver "^6.3.0"
     tsutils "^3.17.1"
+
+"@vercel/node@^1.6.1":
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/@vercel/node/-/node-1.6.1.tgz#03b08cb88a2ea82bb80603e81ae61e7e283ace5a"
+  integrity sha512-sCxhMtShD2kCcpznmYO5HaCG3LaqaJVm0xZiJq8BuGIuSNWgS/aXi5IESFa01whsafaS7WhdMTlAwNPPOvH5lg==
+  dependencies:
+    "@types/node" "*"
 
 abab@^2.0.0:
   version "2.0.2"

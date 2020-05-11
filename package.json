@@ -1,15 +1,15 @@
 {
-  "name": "zeit-now-node-server",
-  "version": "1.0.1",
-  "description": "Create a server for your Zeit @now/node lambdas in order to test them",
+  "name": "vercel-node-server",
+  "version": "2.0.0",
+  "description": "Create a server for your Vercel Node lambdas in order to test them",
   "license": "MIT",
   "author": "Sean Matheson",
   "main": "dist/index.js",
-  "module": "dist/zeit-now-node-server.esm.js",
+  "module": "dist/vercel-node-server.esm.js",
   "typings": "dist/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ctrlplusb/zeit-now-node-server.git"
+    "url": "https://github.com/ctrlplusb/vercel-node-server.git"
   },
   "files": [
     "dist"
@@ -36,7 +36,6 @@
     "trailingComma": "es5"
   },
   "devDependencies": {
-    "@now/node": "^1.0.2",
     "@types/content-type": "^1.1.3",
     "@types/cookie": "^0.3.3",
     "@types/jest": "^25.2.1",
@@ -54,6 +53,7 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
+    "@vercel/node": "^1.6.1",
     "content-type": "^1.0.4",
     "cookie": "^0.4.1",
     "micro": "^9.3.4",

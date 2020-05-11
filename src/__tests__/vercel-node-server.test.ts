@@ -1,10 +1,10 @@
-import { NowRequest, NowResponse } from '@now/node';
+import { NowRequest, NowResponse } from '@vercel/node';
 import { Server } from 'http';
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import listen from 'test-listen';
-import { createServer } from '../src';
+import { createServer } from '../';
 
 let server: Server;
 let url: string;
@@ -137,7 +137,7 @@ it('body - json', async () => {
 });
 
 describe('request handling', () => {
-  it.only('body - invalid json', async () => {
+  it('body - invalid json', async () => {
     // ARRANGE
     route = () => {};
 
