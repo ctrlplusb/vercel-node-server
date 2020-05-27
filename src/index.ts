@@ -72,37 +72,48 @@ function parseCookie(req: IncomingMessage): NowRequestCookies {
   return parse(Array.isArray(header) ? header.join(';') : header);
 }
 
+export const enhanceRequest = async (
+  req: IncomingMessage
+): Promise<NowRequest> => {
+  const bufferOrString = await buffer(req);
+  return Object.assign(req, {
+    body:
+      typeof bufferOrString === 'string'
+        ? bufferOrString
+        : parseBody(req, bufferOrString),
+    cookies: parseCookie(req),
+    query: parseQuery(req),
+  });
+};
+
+export const enhanceResponse = (res: ServerResponse): NowResponse => {
+  let _status: number;
+  const nowRes = Object.assign(res, {
+    status: (status: number) => {
+      _status = status;
+      return nowRes;
+    },
+    json: (jsonBody: any) => {
+      send(nowRes, _status || 200, jsonBody);
+      return nowRes;
+    },
+    send: (body: string | object | Buffer) => {
+      send(nowRes, _status || 200, body);
+      return nowRes;
+    },
+    text: (body: string) => {
+      send(nowRes, _status || 200, body);
+      return nowRes;
+    },
+  });
+  return nowRes;
+};
+
 export const createServer = (
   route: (req: NowRequest, res: NowResponse) => any | Promise<any>
 ) =>
   micro(async (req: IncomingMessage, res: ServerResponse) => {
-    const bufferOrString = await buffer(req);
-    const nowReq = Object.assign(req, {
-      body:
-        typeof bufferOrString === 'string'
-          ? bufferOrString
-          : parseBody(req, bufferOrString),
-      cookies: parseCookie(req),
-      query: parseQuery(req),
-    });
-    let _status: number;
-    const nowRes = Object.assign(res, {
-      status: (status: number) => {
-        _status = status;
-        return nowRes;
-      },
-      json: (jsonBody: any) => {
-        send(nowRes, _status || 200, jsonBody);
-        return nowRes;
-      },
-      send: (body: string | object | Buffer) => {
-        send(nowRes, _status || 200, body);
-        return nowRes;
-      },
-      text: (body: string) => {
-        send(nowRes, _status || 200, body);
-        return nowRes;
-      },
-    });
+    const nowReq = await enhanceRequest(req);
+    const nowRes = enhanceResponse(res);
     return await route(nowReq, nowRes);
   });
