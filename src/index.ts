@@ -5,7 +5,7 @@ import {
   NowRequest,
   NowResponse,
 } from '@vercel/node';
-import { IncomingMessage, ServerResponse } from 'http';
+import { IncomingMessage, ServerResponse, Server, RequestListener } from 'http';
 import { parse } from 'cookie';
 import { parse as parseContentType } from 'content-type';
 import { parse as parseQS } from 'querystring';
@@ -109,11 +109,32 @@ export const enhanceResponse = (res: ServerResponse): NowResponse => {
   return nowRes;
 };
 
-export const createServer = (
-  route: (req: NowRequest, res: NowResponse) => any | Promise<any>
-) =>
-  micro(async (req: IncomingMessage, res: ServerResponse) => {
-    const nowReq = await enhanceRequest(req);
-    const nowRes = enhanceResponse(res);
-    return await route(nowReq, nowRes);
-  });
+export interface Config {
+  disableHelpers?: boolean;
+}
+
+interface DefaultConfig {
+  disableHelpers: false;
+}
+
+type NowRoute = (req: NowRequest, res: NowResponse) => void;
+
+export const createServer = <C extends Config = DefaultConfig>(
+  route: C extends undefined
+    ? NowRoute
+    : C['disableHelpers'] extends true
+    ? RequestListener
+    : NowRoute,
+  config?: C
+) => {
+  if (config != null && config.disableHelpers) {
+    // @ts-expect-error
+    return new Server(route);
+  } else {
+    return micro(async (req: IncomingMessage, res: ServerResponse) => {
+      const nowReq = await enhanceRequest(req);
+      const nowRes = enhanceResponse(res);
+      return await route(nowReq, nowRes);
+    });
+  }
+};

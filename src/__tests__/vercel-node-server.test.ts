@@ -1,5 +1,5 @@
 import { NowRequest, NowResponse } from '@vercel/node';
-import { Server } from 'http';
+import { Server, IncomingMessage, ServerResponse } from 'http';
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
@@ -296,5 +296,53 @@ describe('request handling', () => {
       one: 'item1',
       two: 'item2',
     });
+  });
+});
+
+describe('disableHelpers', () => {
+  let simpleServer: Server;
+  let simpleServerUrl: string;
+  let route: (req: IncomingMessage, res: ServerResponse) => void;
+
+  beforeAll(async () => {
+    simpleServer = createServer(
+      (req, res) => {
+        if (route) {
+          return route(req, res);
+        }
+      },
+      { disableHelpers: true }
+    );
+    simpleServerUrl = await listen(simpleServer);
+  });
+
+  afterAll(() => {
+    simpleServer.close();
+  });
+
+  it('does not apply the vercel helpers', async () => {
+    // ARRANGE
+    let actualRequest: any;
+    let actualResponse: any;
+    route = (req, res) => {
+      actualRequest = req;
+      actualResponse = res;
+      res.end();
+    };
+
+    // ACT
+    await axios.get(`${simpleServerUrl}?one=item1&two=item2`, {
+      headers: {
+        Cookie: 'foo=bar',
+      },
+    });
+
+    // ASSERT
+    expect(actualRequest.query).toBeUndefined();
+    expect(actualRequest.body).toBeUndefined();
+    expect(actualRequest.cookies).toBeUndefined();
+    expect(actualResponse.status).toBeUndefined();
+    expect(actualResponse.json).toBeUndefined();
+    expect(actualResponse.send).toBeUndefined();
   });
 });
