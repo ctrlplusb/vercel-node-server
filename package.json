@@ -54,6 +54,7 @@
   },
   "dependencies": {
     "@vercel/node": "^1.6.1",
+    "clone-response": "^1.0.2",
     "content-type": "^1.0.4",
     "cookie": "^0.4.1",
     "micro": "^9.3.4",

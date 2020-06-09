@@ -6,11 +6,9 @@ import {
   NowResponse,
 } from '@vercel/node';
 import { IncomingMessage, ServerResponse, Server, RequestListener } from 'http';
-import { parse } from 'cookie';
-import { parse as parseContentType } from 'content-type';
-import { parse as parseQS } from 'querystring';
-import { URL } from 'url';
 import micro, { buffer, send } from 'micro';
+// @ts-expect-error
+import cloneResponse from 'clone-response';
 
 export class ApiError extends Error {
   readonly statusCode: number;
@@ -21,69 +19,98 @@ export class ApiError extends Error {
   }
 }
 
-function parseBody(req: IncomingMessage, body: Buffer): NowRequestBody {
-  if (!req.headers['content-type']) {
-    return undefined;
-  }
-
-  const { type } = parseContentType(req.headers['content-type']);
-
-  if (type === 'application/json') {
-    try {
-      return JSON.parse(body.toString());
-    } catch (error) {
-      throw new ApiError(400, 'Invalid JSON');
+function getBodyParser(req: NowRequest, body: Buffer | string) {
+  return function parseBody(): NowRequestBody {
+    if (!req.headers['content-type']) {
+      return undefined;
     }
-  }
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { parse: parseContentType } = require('content-type');
+    const { type } = parseContentType(req.headers['content-type']);
 
-  if (type === 'application/octet-stream') {
-    return body;
-  }
+    if (type === 'application/json') {
+      try {
+        const str = body.toString();
+        return str ? JSON.parse(str) : {};
+      } catch (error) {
+        throw new ApiError(400, 'Invalid JSON');
+      }
+    }
 
-  if (type === 'application/x-www-form-urlencoded') {
-    // note: querystring.parse does not produce an iterable object
-    // https://nodejs.org/api/querystring.html#querystring_querystring_parse_str_sep_eq_options
-    return parseQS(body.toString());
-  }
+    if (type === 'application/octet-stream') {
+      return body;
+    }
 
-  if (type === 'text/plain') {
-    return body.toString();
-  }
+    if (type === 'application/x-www-form-urlencoded') {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { parse: parseQS } = require('querystring');
+      // note: querystring.parse does not produce an iterable object
+      // https://nodejs.org/api/querystring.html#querystring_querystring_parse_str_sep_eq_options
+      return parseQS(body.toString());
+    }
 
-  return undefined;
+    if (type === 'text/plain') {
+      return body.toString();
+    }
+
+    return undefined;
+  };
 }
 
-function parseQuery({ url = '/' }: IncomingMessage): NowRequestQuery {
-  // we provide a placeholder base url because we only want searchParams
-  const params = new URL(url, 'https://n').searchParams;
+function getQueryParser({ url = '/' }: NowRequest) {
+  return function parseQuery(): NowRequestQuery {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { parse: parseURL } = require('url');
+    return parseURL(url, true).query;
+  };
+}
 
-  const query: { [key: string]: string | string[] } = {};
-  params.forEach((value, name) => {
-    query[name] = value;
+function getCookieParser(req: NowRequest) {
+  return function parseCookie(): NowRequestCookies {
+    const header: undefined | string | string[] = req.headers.cookie;
+
+    if (!header) {
+      return {};
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { parse } = require('cookie');
+    return parse(Array.isArray(header) ? header.join(';') : header);
+  };
+}
+
+function setLazyProp<T>(req: NowRequest, prop: string, getter: () => T) {
+  const opts = { configurable: true, enumerable: true };
+  const optsReset = { ...opts, writable: true };
+
+  Object.defineProperty(req, prop, {
+    ...opts,
+    get: () => {
+      const value = getter();
+      // we set the property on the object to avoid recalculating it
+      Object.defineProperty(req, prop, { ...optsReset, value });
+      return value;
+    },
+    set: value => {
+      Object.defineProperty(req, prop, { ...optsReset, value });
+    },
   });
-  return query;
 }
 
-function parseCookie(req: IncomingMessage): NowRequestCookies {
-  const header: undefined | string | string[] = req.headers.cookie;
-  if (!header) {
-    return {};
+export const enhanceRequest = async (req: NowRequest): Promise<NowRequest> => {
+  // We clone the request, so that we can read the incoming stream but then
+  // still allow subsequent consumers to do the same
+  const reqClone = cloneResponse(req);
+  const newReq = cloneResponse(req);
+  const body = await buffer(reqClone);
+
+  setLazyProp<NowRequestCookies>(newReq, 'cookies', getCookieParser(newReq));
+  setLazyProp<NowRequestQuery>(newReq, 'query', getQueryParser(newReq));
+  if (body != null) {
+    setLazyProp<NowRequestBody>(newReq, 'body', getBodyParser(newReq, body));
   }
-  return parse(Array.isArray(header) ? header.join(';') : header);
-}
 
-export const enhanceRequest = async (
-  req: IncomingMessage
-): Promise<NowRequest> => {
-  const bufferOrString = await buffer(req);
-  return Object.assign(req, {
-    body:
-      typeof bufferOrString === 'string'
-        ? bufferOrString
-        : parseBody(req, bufferOrString),
-    cookies: parseCookie(req),
-    query: parseQuery(req),
-  });
+  return newReq;
 };
 
 export const enhanceResponse = (res: ServerResponse): NowResponse => {
@@ -132,6 +159,7 @@ export const createServer = <C extends Config = DefaultConfig>(
     return new Server(route);
   } else {
     return micro(async (req: IncomingMessage, res: ServerResponse) => {
+      // @ts-expect-error
       const nowReq = await enhanceRequest(req);
       const nowRes = enhanceResponse(res);
       return await route(nowReq, nowRes);

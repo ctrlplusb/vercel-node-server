@@ -139,7 +139,10 @@ it('body - json', async () => {
 describe('request handling', () => {
   it('body - invalid json', async () => {
     // ARRANGE
-    route = () => {};
+    route = req => {
+      // @ts-expect-error
+      const foo = req.body;
+    };
 
     expect.assertions(2);
 
